@@ -20,6 +20,19 @@ const getFiles = async function*(dir) {
   }
 }
 
+function checkRowsHaveSameColor(imageData, w, h) {
+  for (let i = 0; i < h; i++) {
+    const start = i * w * 4
+    const end = start + w * 4
+    const colours = new Set()
+    for (let i = start; i < end; i += 4) {
+      colours.add(imageData.slice(i, i + 4).join(","))
+    }
+    if (colours.size > 1) return
+  }
+  return true
+}
+
 async function generate(folder) {
   const dir = path.join(source, "assets/minecraft/textures", folder)
   for await (const f of getFiles(dir)) if (f.endsWith(".png")) {
@@ -43,13 +56,16 @@ async function generate(folder) {
     } else if (img.width !== img.height) {
       mcmeta.animation = { height: img.height }
     }
-    fs.writeFileSync(path.join(outDir, file) + ".mcmeta", JSON.stringify(mcmeta))
     const canvas = new Canvas(w, h * w)
     const ctx = canvas.getContext("2d")
     for (let x = 0; x < w; x++) {
       ctx.drawImage(img, 0, 0, w, h, x, x * h, w, h)
       ctx.drawImage(img, 0, 0, w, h, x - w, x * h, w, h)
     }
+    const imageData = ctx.getImageData(0, 0, w, h).data
+    if (imageData.every((v, i) => (i % 4 !== 3) || (v === 0))) continue
+    if (checkRowsHaveSameColor(imageData, w, h)) continue
+    fs.writeFileSync(path.join(outDir, file) + ".mcmeta", JSON.stringify(mcmeta))
     canvas.saveAs(path.join(outDir, file))
   }
 }
