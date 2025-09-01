@@ -6,7 +6,7 @@ if (fs.existsSync("../assets")) fs.rmSync("../assets", { recursive: true })
 
 fs.mkdirSync("../assets/minecraft/textures", { recursive: true })
 
-const source = "../../1.20.2"
+const source = "../../1.21.8"
 
 const getFiles = async function*(dir) {
   const dirents = await fs.promises.readdir(dir, { withFileTypes: true })
